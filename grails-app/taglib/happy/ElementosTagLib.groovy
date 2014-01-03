@@ -1,8 +1,5 @@
 package happy
 
-import happy.ejecucion.PeriodosInec
-import happy.ejecucion.Planilla
-import happy.ejecucion.PlanillaAdmin
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.springframework.beans.SimpleTypeConverter
 import org.springframework.context.MessageSourceResolvable
@@ -12,279 +9,192 @@ class ElementosTagLib {
 
     static namespace = "elm"
 
-    Closure numero = { attrs ->
-        if (attrs.debug == "true" || attrs.debug == true) {
-            println "AQUI: " + attrs
-        }
-        if (!attrs.decimales) {
-            if (!attrs["format"]) {
-                attrs["format"] = "##,##0"
-            }
-            if (!attrs.minFractionDigits) {
-                attrs.minFractionDigits = 2
-            }
-            if (!attrs.maxFractionDigits) {
-                attrs.maxFractionDigits = 2
-            }
-        } else {
-            def dec = attrs.remove("decimales").toInteger()
-
-            attrs["format"] = "##,##0"
-            if (dec > 0) {
-                attrs["format"] += "."
-            }
-            dec.times {
-                attrs["format"] += "#"
-            }
-
-//            attrs["format"] = "##"
-//            if (dec > 0) {
-//                attrs["format"] += ","
-//                dec.times {
-//                    attrs["format"] += "#"
-//                }
-//                attrs["format"] += "0"
-//            }
-            attrs.maxFractionDigits = dec
-            attrs.minFractionDigits = dec
-        }
-        if (!attrs.locale) {
-            attrs.locale = "ec"
-        }
-        if (attrs.debug == "true" || attrs.debug == true) {
-            println attrs
-            println g.formatNumber(attrs)
-            println g.formatNumber(number: attrs.number, maxFractionDigits: 3, minFractionDigits: 3, format: "##.###", locale: "ec")
-            println g.formatNumber(number: attrs.number, maxFractionDigits: 3, minFractionDigits: 3, format: "##,###.###", locale: "ec")
-        }
-        if (attrs.cero == "false" || attrs.cero == false || attrs.cero == "hide") {
-            if (attrs.number) {
-                if (attrs.number.toDouble() == 0.toDouble()) {
-                    out << ""
-                    return
-                }
-            } else {
-                out << ""
-                return
-            }
-        }
-        out << g.formatNumber(attrs)
-    }
-    Closure headerPlanillaAdm = { attrs ->
-        def str = ""
-        PlanillaAdmin planilla = attrs.planilla
-        Obra obra = planilla.obra
-
-        str += "<div class='well'>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Obra</div>"
-        str += "<div class='span5'>" + obra.nombre + " " + obra?.descripcion + "</div>"
-        str += "</div>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Lugar</div>"
-        str += "<div class='span5'>" + (obra.lugar?.descripcion ?: "") + "</div>"
-        str += "<div class='span2 bold'>Planilla</div>"
-        str += "<div class='span3'>" + planilla.numero + "</div>"
-        str += "</div>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Ubicación</div>"
-        str += "<div class='span5'>Parroquia " + obra.parroquia?.nombre + " - Cantón " + obra.parroquia?.canton?.nombre + "</div>"
-        str += "<div class='span2 bold'>Monto obra</div>"
-        str += "<div class='span3'>" + formatNumber(number: obra.valor, format: "##,##0", locale: "ec", minFractionDigits: 2, maxFractionDigits: 2) + "</div>"
-        str += "</div>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Contratista</div>"
-        str += "<div class='span5'>Administración directa</div>"
-        str += "</div>"
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Plazo</div>"
-        str += "<div class='span5'>" + formatNumber(number: (obra.plazoEjecucionMeses) * 30 + obra.plazoEjecucionDias, minFractionDigits: 0, maxFractionDigits: 0, locale: "ec") + " días</div>"
-        str += "<div class='span2 bold'>Fecha pres. planilla</div>"
-        str += "<div class='span3'>" + planilla.fechaIngreso.format("dd-MM-yyyy") + "</div>"
-        str += "</div>"
-
-        str += "</div>"
-
-        out << str
-    }
-
-
-    Closure headerPlanillaAdmin = { attrs ->
-        def str = ""
-        PlanillaAdmin planilla = attrs.planilla
-        Obra obra = planilla.obra
-
-        str += "<div class='well'>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Obra</div>"
-        str += "<div class='span5'>" + obra.nombre + " " + obra?.descripcion + "</div>"
-        str += "<div class='span2 bold'>Planilla</div>"
-        str += "<div class='span3'>" + planilla.numero + "</div>"
-        str += "</div>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Lugar</div>"
-        str += "<div class='span5'>" + (obra.lugar?.descripcion ?: "") + "</div>"
-        str += "<div class='span2 bold'>Fecha planilla</div>"
-        str += "<div class='span3'>" + planilla.fechaIngreso.format("dd-MM-yyyy") + "</div>"
-        str += "</div>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Ubicación</div>"
-        str += "<div class='span5'>Parroquia " + obra.parroquia?.nombre + " - Cantón " + obra.parroquia?.canton?.nombre + "</div>"
-        str += "</div>"
-
-        str += "</div>"
-
-        out << str
-    }
-
-    Closure headerPlanilla = { attrs ->
-        def str = ""
-        Planilla planilla = attrs.planilla
-        Obra obra = planilla.contrato.oferta.concurso.obra
-
-        str += "<div class='well'>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Obra</div>"
-        str += "<div class='span5'>" + obra.nombre + " " + obra?.descripcion + "</div>"
-        str += "</div>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Lugar</div>"
-        str += "<div class='span5'>" + (obra.lugar?.descripcion ?: "") + "</div>"
-        str += "<div class='span2 bold'>Planilla</div>"
-        str += "<div class='span3'>" + planilla.numero + "</div>"
-        str += "</div>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Ubicación</div>"
-        str += "<div class='span5'>Parroquia " + obra.parroquia?.nombre + " - Cantón " + obra.parroquia?.canton?.nombre + "</div>"
-        str += "<div class='span2 bold'>Monto contrato</div>"
-        str += "<div class='span3'>" + formatNumber(number: planilla.contrato.monto, format: "##,##0", locale: "ec", minFractionDigits: 2, maxFractionDigits: 2) + "</div>"
-        str += "</div>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Contratista</div>"
-        str += "<div class='span5'>" + planilla.contrato.oferta.proveedor.nombre + "</div>"
-        str += "<div class='span2 bold'>Periodo</div>"
-        str += "<div class='span3'>"
-        if (planilla.tipoPlanilla.codigo == "A") {
-            str += 'Anticipo (' + PeriodosInec.findByFechaInicioLessThanEqualsAndFechaFinGreaterThanEquals(planilla.fechaPresentacion, planilla.fechaPresentacion).descripcion + ")"
-        } else {
-            if (planilla.tipoPlanilla.codigo == "L") {
-                str += "Liquidación del reajuste (${planilla.fechaPresentacion.format('dd-MM-yyyy')})"
-            } else {
-                str += 'del ' + planilla.fechaInicio.format('dd-MM-yyyy') + ' al ' + planilla.fechaFin.format('dd-MM-yyyy')
-            }
-//            str += planilla.periodoIndices.descripcion
-        }
-        str += "</div>"
-        str += "</div>"
-
-        str += "<div class='row'>"
-        str += "<div class='span1 bold'>Plazo</div>"
-        str += "<div class='span5'>" + formatNumber(number: planilla.contrato.plazo, minFractionDigits: 0, maxFractionDigits: 0, locale: "ec") + " días</div>"
-        str += "<div class='span2 bold'>Fecha pres. planilla</div>"
-        str += "<div class='span3'>" + planilla.fechaPresentacion.format("dd-MM-yyyy") + "</div>"
-        str += "</div>"
-
-        str += "</div>"
-
-        out << str
-    }
-    Closure headerPlanillaReporte = { attrs ->
-        def str = ""
-        Planilla planilla = attrs.planilla
-        Obra obra = planilla.contrato?.oferta?.concurso?.obra
-
-        str += "<div class='well'>"
-
-        str += "<table border='0' class='noborder'>"
-        str += "<tr>"
-        str += "<td class='bold'>Obra</td>"
-        str += "<td colspan='3'>" + obra.nombre + "</td>"
-        str += "</tr>"
-        str += "<tr>"
-        str += "<td class='bold'>Lugar</td>"
-        str += "<td>" + obra.lugar.descripcion + "</td>"
-        str += "<td class='bold'>Planilla</td>"
-        str += "<td>" + planilla.numero + "</td>"
-        str += "</tr>"
-        str += "<tr>"
-        str += "<td class='bold'>Ubicación</td>"
-        str += "<td>Parroquia " + obra.parroquia.nombre + " - Cantón " + obra.parroquia.canton.nombre + "</td>"
-        str += "<td class='bold'>Monto contrato</td>"
-        str += "<td>" + elm.numero(number: planilla.contrato.monto) + "</td>"
-        str += "</tr>"
-        str += "<tr>"
-        str += "<td class='bold'>Contratista</td>"
-        str += "<td>Parroquia " + planilla.contrato.oferta.proveedor.nombre + "</td>"
-        str += "<td class='bold'>Periodo</td>"
-        str += "<td>" + (planilla.tipoPlanilla.codigo == 'A' ? 'Anticipo' : 'del ' + planilla.fechaInicio.format('dd-MM-yyyy') + ' al ' + planilla.fechaFin.format('dd-MM-yyyy')) + "</td>"
-        str += "</tr>"
-        str += "<tr>"
-        str += "<td class='bold'>Plazo</td>"
-        str += "<td>Parroquia " + planilla.contrato.plazo + "</td>"
-        str += "<td class='bold'></td>"
-        str += "<td></td>"
-        str += "</tr>"
-        str += "</table>"
-
-        str += "</div>"
-
-        out << str
+    /**
+     * crea un div para el not found (con el fantasmita)
+     */
+    def notFound = { attrs ->
+        def elem = attrs.elem ?: "elemento"
+        def genero = attrs.genero ?: "o"
+        def mensaje = attrs.mensaje ?: "No se encontró ${genero == 'o' ? 'el' : 'la'} ${elem} solicitad${genero}."
+        def html = ""
+        html += '<div class="text-info text-center not-found">'
+        html += '<i class="icon-ghost fa-6x pull-left text-shadow"></i>'
+        html += '<p>' + mensaje + '</p>'
+        html += '</div>'
+        out << html
     }
 
     /**
-     * Creates next/previous links to support pagination for the current controller.<br/>
-     *
-     * &lt;g:paginate total="${Account.count()}" /&gt;<br/>
-     *
-     * @emptyTag
-     *
-     * @attr total REQUIRED The total number of results to paginate
-     * @attr action the name of the action to use in the link, if not specified the default action will be linked
-     * @attr controller the name of the controller to use in the link, if not specified the current controller will be linked
-     * @attr id The id to use in the link
-     * @attr params A map containing request parameters
-     * @attr prev The text to display for the previous link (defaults to "Previous" as defined by default.paginate.prev property in I18n messages.properties)
-     * @attr next The text to display for the next link (defaults to "Next" as defined by default.paginate.next property in I18n messages.properties)
-     * @attr max The number of records displayed per page (defaults to 10). Used ONLY if params.max is empty
-     * @attr maxsteps The number of steps displayed for pagination (defaults to 10). Used ONLY if params.maxsteps is empty
-     * @attr offset Used only if params.offset is empty
-     * @attr fragment The link fragment (often called anchor tag) to use
-     */
-    Closure paginate = { attrs ->
-        def writer = out
+     * crea un datepicker
+     *  attrs:
+     *      class           clase
+     *      name            name
+     *      id              id (opcional, si no existe usa el mismo name)
+     *      value           value (groovy Date o String)
+     *      format          format para el Date (groovy)
+     *      minDate         fecha mínima para el datepicker. cualquier cosa anterior se deshabilita
+     *                          ej: +5d para 5 días después de la fecha actual
+     *      maxDate         fecha máxima para el datepicker. cualquier cosa posterior se deshabilita
+     *      orientation     String. Default: “auto”
+     *                               A space-separated string consisting of one or two of “left” or “right”, “top” or “bottom”, and “auto” (may be omitted);
+     *                                      for example, “top left”, “bottom” (horizontal orientation will default to “auto”), “right” (vertical orientation will default to “auto”),
+     *                                      “auto top”. Allows for fixed placement of the picker popup.
+     *                               “orientation” refers to the location of the picker popup’s “anchor”; you can also think of it as the location of the trigger element (input, component, etc)
+     *                               relative to the picker.
+     *                               “auto” triggers “smart orientation” of the picker.
+     *                                  Horizontal orientation will default to “left” and left offset will be tweaked to keep the picker inside the browser viewport;
+     *                                  vertical orientation will simply choose “top” or “bottom”, whichever will show more of the picker in the viewport.
+     *      autoclose       boolean. default: true cierra automaticamente el datepicker cuando se selecciona una fecha
+     *      todayHighlight  boolean. default: true marca la fecha actual
+     *      beforeShowDay   funcion. funcion que se ejecuta antes de mostrar el día. se puede utilizar para deshabilitar una fecha en particular
+     *                          ej:
+     *                               beforeShowDay: function (date){*                                   if (date.getMonth() == (new Date()).getMonth())
+     *                                       switch (date.getDate()){*                                           case 4:
+     *                                               return {*                                                   tooltip: 'Example tooltip',
+     *                                                   classes: 'active'
+     *};
+     *                                           case 8:
+     *                                               return false;
+     *                                           case 12:
+     *                                               return "green";
+     *}*}*                                }
+     *      onChangeDate    funcion. funcion q se ejecuta al cambiar una fecha
+     *      daysOfWeekDisabled  lista de números para deshabilitar ciertos días: 0:domingo, 1:lunes, 2:martes, 3:miercoles, 4:jueves, 5:viernes, 6:sabado
+     *      img             imagen del calendario. clase de glyphicons o font awsome
+     **/
+    def datepicker = { attrs ->
+        def name = attrs.name
+        def nameInput = name + "_input"
+        def nameHiddenDay = name + "_day"
+        def nameHiddenMonth = name + "_month"
+        def nameHiddenYear = name + "_year"
+        def id = nameInput
+        if (attrs.id) {
+            id = attrs.id
+        }
+        def readonly = attrs.readonly ?: true
+        def value = attrs.value
 
-        writer << "<ul>"
+        def clase = attrs["class"]
+
+        def format = attrs.format ?: "dd-mm-yyyy"
+
+        def startDate = attrs.minDate ?: false
+        def endDate = attrs.maxDate ?: false
+
+        def orientation = attrs.orientation ?: "top auto"
+
+        def autoclose = attrs.autoclose ?: true
+        def todayHighlight = attrs.todayHighlight ?: true
+
+        def beforeShowDay = attrs.beforeShowDay ?: false
+        def onChangeDate = attrs.onChangeDate ?: false
+
+        def daysOfWeekDisabled = attrs.daysOfWeekDisabled ?: false
+
+        def img = attrs.img ?: "fa fa-calendar"
+
+        if (value instanceof Date) {
+            value = value.format(format)
+        }
+        if (!value) {
+            value = ""
+        }
+
+        def br = "\n"
+
+        def textfield = "<input type='text' name='${nameInput}' id='${id}' " + (readonly ? "readonly=''" : "") + " value='${value}' class='${clase}' />"
+        def hiddenDay = "<input type='hidden' name='${nameHiddenDay}' id='${nameHiddenDay}'/>"
+        def hiddenMonth = "<input type='hidden' name='${nameHiddenMonth}' id='${nameHiddenMonth}'/>"
+        def hiddenYear = "<input type='hidden' name='${nameHiddenYear}' id='${nameHiddenYear}'/>"
+        def hidden = "<input type='hidden' name='${name}' id='${name}' value='date.struct'/>"
+
+        def div = ""
+        div += hiddenDay + br
+        div += hiddenMonth + br
+        div += hiddenYear + br
+        div += hidden + br
+        div += "<div class='input-group'>" + br
+        div += textfield + br
+        div += "<span class=\"input-group-addon\"><i class=\"${img}\"></i></span>" + br
+        div += "</div>" + br
+
+        def js = "<script type=\"text/javascript\">" + br
+        js += '$("#' + id + '").datepicker({' + br
+        if (startDate) {
+            js += "startDate: '${startDate}'," + br
+        }
+        if (endDate) {
+            js += "endDate: '${endDate}'," + br
+        }
+        if (daysOfWeekDisabled) {
+            js += "daysOfWeekDisabled: '${daysOfWeekDisabled}'," + br
+        }
+        if (beforeShowDay) {
+//            js += "beforeShowDay: function() { ${beforeShowDay}() }," + br
+            js += "beforeShowDay: ${beforeShowDay}," + br
+        }
+        js += 'language: "es",' + br
+        js += "format: '${format}'," + br
+        js += "orientation: '${orientation}'," + br
+        js += "autoclose: ${autoclose}," + br
+        js += "todayHighlight: ${todayHighlight}" + br
+        js += "}).on('changeDate', function(e) {" + br
+        js += "var fecha = e.date;" + br
+        js += "if(fecha) {" + br
+        js += '$("#' + nameHiddenDay + '").val(fecha.getDate());' + br
+        js += '$("#' + nameHiddenMonth + '").val(fecha.getMonth() + 1);' + br
+        js += '$("#' + nameHiddenYear + '").val(fecha.getFullYear());' + br
+        js += '$(e.currentTarget).parents(".grupo").removeClass("has-error").find("label.help-block").hide();' + br
+        js += "}" + br
+        if (onChangeDate) {
+            js += onChangeDate + "();"
+        }
+        js += "});" + br
+        js += "</script>" + br
+
+        out << div
+        out << js
+    }
+
+    /**
+     * hace la paginacion para una lista
+     *  attrs:
+     *          total       la cantidad total que tiene la tabla (el total de todas las páginas)
+     *          maxPag      la cantidad máxima de páginas a mostrar. default: 10:       1 2 3 4 5 6 7 8 9 10 11 ... 20
+     *          controller  controller para los links (si es diferente al actual)
+     *          action      action para los links (si es diferente al actual)
+     *          params      los parametros del link
+     *                          max         cantidad máxima de registros por página
+     *                          offset      el offset
+     *                          sort        el ordenamiento
+     *                          order       el sentido del ordenamiento
+     *
+     */
+    def pagination = { attrs ->
+//        println attrs
 
         if (attrs.total == null) {
             throwTagError("Tag [paginate] is missing required attribute [total]")
         }
 
-        def messageSource = grailsAttributes.messageSource
-        def locale = RequestContextUtils.getLocale(request)
+        def maxPag = params.maxPag ?: 10
 
-        def total = attrs.int('total') ?: 0
+        def params = attrs.params
+
+        def total = attrs.total
+        def max = params.max ? params.max.toInteger() : 10
+        def offset = params.offset ? params.offset.toInteger() : 0
+
+        def curPag = (offset / max) + 1
+
+        def paginas = Math.ceil(total / max).toInteger()
+
         def action = (attrs.action ? attrs.action : (params.action ? params.action : "list"))
-        def offset = params.int('offset') ?: 0
-        def max = params.int('max')
-        def maxsteps = (attrs.int('maxsteps') ?: 10)
-
-        if (!offset) offset = (attrs.int('offset') ?: 0)
-        if (!max) max = (attrs.int('max') ?: 10)
 
         def linkParams = [:]
         if (attrs.params) linkParams.putAll(attrs.params)
-        linkParams.offset = offset - max
+//        linkParams.offset = offset - max
         linkParams.max = max
         if (params.sort) linkParams.sort = params.sort
         if (params.order) linkParams.order = params.order
@@ -301,161 +211,94 @@ class ElementosTagLib {
         }
         linkTagAttrs.params = linkParams
 
-        // determine paging variables
-        def steps = maxsteps > 0
-        int currentstep = (offset / max) + 1
-        int firststep = 1
-        int laststep = Math.round(Math.ceil(total / max))
+        def html = "<div class='row text-center'><ul class='pagination'>"
 
-        // display previous link when not on firststep
-        if (currentstep > firststep) {
-            linkTagAttrs.class = 'prevLink'
+//        println "total: " + total + " max: " + max + " paginas: " + paginas + " curPag: " + curPag
+
+        def firstPag, lastPag, link
+
+        if (paginas > maxPag + 2) {
+            firstPag = (curPag - Math.ceil(maxPag / 2)).toInteger()
+            if (firstPag < 2) {
+                firstPag = 2
+            }
+            lastPag = (curPag + Math.ceil(maxPag / 2)).toInteger()
+            if (lastPag > paginas - 1) {
+                lastPag = paginas - 1
+            }
+            def t = lastPag - firstPag
+            if (t <= maxPag) {
+                def extra = maxPag - t - 1
+                lastPag += extra
+                if (lastPag > paginas - 1) {
+                    lastPag = paginas - 1
+                }
+            }
+        } else {
+            firstPag = 2
+            lastPag = paginas - 1
+        }
+
+        def clase = curPag == 1 ? "active" : ""
+
+        if (clase == "") {
+//            params.offset = offset - max
+//            link = createLink(action: action, params: params)
+
             linkParams.offset = offset - max
-            writer << "<li>" + link(linkTagAttrs.clone()) {
-                (attrs.prev ?: messageSource.getMessage('paginate.prev', null, messageSource.getMessage('default.paginate.prev', null, 'Previous', locale), locale))
+            link = createLink(linkTagAttrs.clone())
+
+            html += "<li><a href='${link}'>&laquo;</a></li>"
+        }
+
+        html += "<li class='${clase}'>"
+//        params.offset = 0
+//        link = createLink(action: action, params: params)
+        linkParams.offset = 0
+        link = createLink(linkTagAttrs.clone())
+        html += clase == 'active' ? "<span>1</span>" : "<a href='${link}'>1</a>"
+        html += "</li>"
+
+        if (firstPag > 2) {
+            html += "<li class='disabled'><span>...</span></li>"
+        }
+
+        for (def i = firstPag; i <= lastPag; i++) {
+//            params.offset = (i - 1) * max
+//            link = createLink(action: action, params: params)
+            linkParams.offset = (i - 1) * max
+            link = createLink(linkTagAttrs.clone())
+            clase = curPag == i ? "active" : ""
+            html += "<li class='${clase}'>"
+            html += clase == 'active' ? "<span>${i}</span>" : "<a href='${link}'>${i}</a>"
+            html += "</li>"
+        }
+
+        if (lastPag < paginas - 1) {
+            html += "<li class='disabled'><span>...</span></li>"
+        }
+
+        if (paginas > 1) {
+            clase = curPag == paginas ? "active" : ""
+//            params.offset = (paginas - 1) * max
+//            link = createLink(action: action, params: params)
+            linkParams.offset = (paginas - 1) * max
+            link = createLink(linkTagAttrs.clone())
+            html += "<li class='${clase}'>"
+            html += clase == 'active' ? "<span>${paginas}</span>" : "<a href='${link}'>${paginas}</a>"
+            html += "</li>"
+            if (clase == "") {
+//                params.offset = offset + max
+//                link = createLink(action: action, params: params)
+                linkParams.offset = offset + max
+                link = createLink(linkTagAttrs.clone())
+                html += "<li><a href='${link}'>&raquo;</a></li>"
             }
-            writer << "</li>"
         }
 
-        // display steps when steps are enabled and laststep is not firststep
-        if (steps && laststep > firststep) {
-            linkTagAttrs.class = 'step'
+        html += "</ul></div>"
 
-            // determine begin and endstep paging variables
-            int beginstep = currentstep - Math.round(maxsteps / 2) + (maxsteps % 2)
-            int endstep = currentstep + Math.round(maxsteps / 2) - 1
-
-            if (beginstep < firststep) {
-                beginstep = firststep
-                endstep = maxsteps
-            }
-            if (endstep > laststep) {
-                beginstep = laststep - maxsteps + 1
-                if (beginstep < firststep) {
-                    beginstep = firststep
-                }
-                endstep = laststep
-            }
-
-            // display firststep link when beginstep is not firststep
-            if (beginstep > firststep) {
-                linkParams.offset = 0
-                writer << link(linkTagAttrs.clone()) { firststep.toString() }
-                writer << '<li class="step disabled"><a href="#">..</a></li>'
-            }
-
-            // display paginate steps
-            (beginstep..endstep).each { i ->
-                if (currentstep == i) {
-                    writer << "<li class=\"currentStep active\"><a href=\"#\">${i}</a></span>"
-                } else {
-                    linkParams.offset = (i - 1) * max
-                    writer << "<li>" + link(linkTagAttrs.clone()) { i.toString() } + "</li>"
-                }
-            }
-
-            // display laststep link when endstep is not laststep
-            if (endstep < laststep) {
-                writer << '<li class="step disabled"><a href="#">..</a></li>'
-                linkParams.offset = (laststep - 1) * max
-                writer << "<li>" + link(linkTagAttrs.clone()) { laststep.toString() } + "</li>"
-            }
-        }
-
-        // display next link when not on laststep
-        if (currentstep < laststep) {
-            linkTagAttrs.class = 'nextLink'
-            linkParams.offset = offset + max
-            writer << "<li>" + link(linkTagAttrs.clone()) {
-                (attrs.next ? attrs.next : messageSource.getMessage('paginate.next', null, messageSource.getMessage('default.paginate.next', null, 'Next', locale), locale))
-            } + "</li>"
-        }
-        writer << "</ul>"
-    }
-
-    /**
-     * attrs:
-     *      class       clase
-     *      name        name
-     *      id          id (opcional, si no existe usa el mismo name)
-     *      value       value (groovy Date)
-     *      format      format para el Date (groovy)
-     *      onClose     funcion js a ejecutarse cuando se cierra el datepicker (se usa <elm:datepicker onClose="funcion" />
-     *      onSelect    funcion js a ejecutarse cuando se selecciona una fecha (se usa <elm:datepicker onSelect="funcion" />
-     *      yearRange   rango de años en el select de años:  The range of years displayed in the year drop-down: either relative to today's year ("-nn:+nn"),
-     *                                                       relative to the currently selected year ("c-nn:c+nn"), absolute ("nnnn:nnnn"), or combinations of these formats ("nnnn:-nn").
-     *                                                       Note that this option only affects what appears in the drop-down, to restrict which dates may be selected use the minDate and/or maxDate options.
-     *      minDate     fecha minima seleccionable
-     *      maxDate     fecha maxima seleccionable:   The minimum selectable date. When set to null, there is no minimum.
-     *                                                  Multiple types supported:
-     *                                                       Date: A date object containing the minimum date.
-     *                                                       Number: A number of days from today. For example 2 represents two days from today and -1 represents yesterday.
-     *                                                       String: A string in the format defined by the dateFormat option, or a relative date.
-     *                                                                      Relative dates must contain value and period pairs;
-     *                                                                      valid periods are "y" for years, "m" for months, "w" for weeks, and "d" for days.
-     *                                                                      For example, "+1m +7d" represents one month and seven days from today.
-     */
-    def datepicker = { attrs ->
-        def str = ""
-        def clase = attrs.remove("class")
-        def name = attrs.remove("name")
-        def id = attrs.id ? attrs.remove("id") : name
-        if (id.contains(".")) {
-            id = id.replaceAll("\\.", "_")
-        }
-
-        def value = attrs.remove("value")
-        if (value.toString() == 'none') {
-            value = null
-        } else if (!value) {
-            value = null
-        }
-
-        def format = attrs.format ? attrs.remove("format") : "dd-MM-yyyy"
-        def formatJs = format
-        formatJs = formatJs.replaceAll("M", "m")
-        formatJs = formatJs.replaceAll("yyyy", "yy")
-
-        str += "<input type='text'  autocomplete='off' class='datepicker " + clase + "' name='" + name + "' id='" + id + "' value='" + g.formatDate(date: value, format: format) + "'"
-        str += renderAttributes(attrs)
-        str += "/>"
-
-        def js = "<script type='text/javascript'>"
-        js += '$(function() {'
-        js += '$("#' + id + '").datepicker({'
-        js += 'dateFormat: "' + formatJs + '",'
-        js += 'changeMonth: true,'
-        js += 'changeYear: true'
-        if (attrs.onClose) {
-            js += ','
-            js += 'onClose: ' + attrs.onClose
-        }
-        if (attrs.onSelect) {
-            js += ','
-            js += 'onSelect: ' + attrs.onSelect
-        }
-        if (attrs.yearRange) {
-            js += ','
-//            println attrs.yearRange
-            js += 'yearRange: "' + attrs.yearRange + '"'
-        }
-        if (attrs.minDate) {
-            js += ","
-            js += "minDate:" + attrs.minDate
-        }
-        if (attrs.maxDate) {
-            js += ","
-            js += "maxDate:" + attrs.maxDate
-        }
-//        js += 'showOn          : "both",'
-//        js += 'buttonImage     : "' + resource(dir: 'images', file: 'calendar.png') + '",'
-//        js += 'buttonImageOnly : true'
-        js += '});'
-        js += '});'
-        js += "</script>"
-//       println "js "+js
-        out << str
-        out << js
+        out << html
     }
 
     /**
@@ -473,6 +316,7 @@ class ElementosTagLib {
      * @attr keys A list of values to be used for the value attribute of each "option" element.
      * @attr optionKey By default value attribute of each &lt;option&gt; element will be the result of a "toString()" call on each element. Setting this allows the value to be a bean property of each element in the list.
      * @attr optionValue By default the body of each &lt;option&gt; element will be the result of a "toString()" call on each element in the "from" attribute list. Setting this allows the value to be a bean property of each element in the list.
+     * @attr optionClass permite setear una clase individualmente a cada option
      * @attr value The current selected value that evaluates equals() to true for one of the elements in the from list.
      * @attr multiple boolean value indicating whether the select a multi-select (automatically true if the value is a collection, defaults to false - single-select)
      * @attr valueMessagePrefix By default the value "option" element will be the result of a "toString()" call on each element in the "from" attribute list. Setting this allows the value to be resolved from the I18n messages. The valueMessagePrefix will be suffixed with a dot ('.') and then the value attribute of the option to resolve the message. If the message could not be resolved, the value is presented.

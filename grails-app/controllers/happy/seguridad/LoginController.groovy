@@ -13,6 +13,15 @@ class LoginController {
         redirect(action: 'login')
     }
 
+    def validarSesion() {
+        if (session.usuario) {
+            render "OK"
+        } else {
+//            render "NO"
+            render "OK"
+        }
+    }
+
     def olvidoPass() {
 
 //        println(params)
@@ -29,7 +38,7 @@ class LoginController {
 
             def random = new Random()
             def chars = []
-            ['A'..'Z', 'a'..'z', '0'..'9', ('!@$%^&*' as String[]).toList()].each {chars += it}
+            ['A'..'Z', 'a'..'z', '0'..'9', ('!@$%^&*' as String[]).toList()].each { chars += it }
             def newPass = (1..8).collect { chars[random.nextInt(chars.size())] }.join()
 
             persona.password = newPass.encodeAsMD5()
@@ -59,23 +68,22 @@ class LoginController {
             eq("activo", 1)
         }
 
-       if(user?.departamento?.id[0] == 13){
+        if (user?.departamento?.id[0] == 13) {
 
-           flash.message = "El departamento al que pertenece el usuario no es válido para logear en el sistema!"
+            flash.message = "El departamento al que pertenece el usuario no es válido para logear en el sistema!"
 
-       }
-       else {
-        if (user.size() == 0) {
-            flash.message = "No se ha encontrado el usuario"
-        } else if (user.size() > 1) {
-            flash.message = "Ha ocurrido un error grave"
         } else {
-            user = user[0]
-            session.usuario = user
-            redirect(action: "perfiles")
-            return
+            if (user.size() == 0) {
+                flash.message = "No se ha encontrado el usuario"
+            } else if (user.size() > 1) {
+                flash.message = "Ha ocurrido un error grave"
+            } else {
+                user = user[0]
+                session.usuario = user
+                redirect(action: "perfiles")
+                return
+            }
         }
-       }
 
         redirect(controller: 'login', action: "login")
     }
@@ -106,8 +114,7 @@ class LoginController {
             } else {
                 redirect(controller: "inicio", action: "index")
             }
-        }
-        else {
+        } else {
             redirect(action: "login")
         }
     }
