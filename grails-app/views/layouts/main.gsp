@@ -21,6 +21,7 @@
         <!-- JQuery -->
         <script src="${resource(dir: 'js/jquery/js', file: 'jquery-1.9.1.js')}"></script>
         <script src="${resource(dir: 'js/jquery/js', file: 'jquery-ui-1.10.3.custom.min.js')}"></script>
+        <link href="${resource(dir: 'js/jquery/css/ui-lightness', file: 'jquery-ui-1.10.3.custom.min.css')}" rel="stylesheet">
 
         <!-- funciones de JS -->
         <!-- funciones de strings y formats sacados de internet (pad, starts y ends with, capitalize, format_number, str_replace) -->

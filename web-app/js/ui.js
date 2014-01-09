@@ -28,11 +28,11 @@ bootbox.setDefaults({
 context.init({
     preventDoubleContext : false
 });
-context.attach('html', [
-    {
-        header : 'No click derecho!'
-    }
-]);
+//context.attach('html', [
+//    {
+//        header : 'No click derecho!'
+//    }
+//]);
 
 $(".digits").keydown(function (ev) {
     return validarInt(ev);
